@@ -64,6 +64,15 @@ namespace limxsdk
     void subscribeRobotState(std::function<void(const RobotStateConstPtr &)> cb) override;
 
     /**
+     * @brief Method for subscribing to robot command (RobotCmd) updates
+     * @details Register a callback function that will be invoked when updated robot command (RobotCmd) data is received;
+     *          Typical use case: Real-time collection, parsing and analysis of RobotCmd data during physical robot operation
+     * @param cb Callback function for command updates, which takes a constant smart pointer to RobotCmd (RobotCmdConstPtr)
+     *           as the input parameter and has no return value
+     */
+    void subscribeRobotCmd(std::function<void(const RobotCmdConstPtr &)> cb) override;
+
+    /**
      * @brief Publish a command to control the robot's actions.
      *
      * @param cmd The RobotCmd object representing the desired robot command.

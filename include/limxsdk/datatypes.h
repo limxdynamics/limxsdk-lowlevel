@@ -93,7 +93,7 @@ namespace limxsdk
 
     void resize(int motor_num)
     {
-      mode.resize(motor_num, 0.0);
+      mode.resize(motor_num, 0);
       q.resize(motor_num, 0.0);
       dq.resize(motor_num, 0.0);
       tau.resize(motor_num, 0.0);
@@ -103,7 +103,11 @@ namespace limxsdk
     }
 
     uint64_t stamp;                       // Timestamp in nanoseconds, typically represents the time when this data was recorded or generated.
-    std::vector<uint8_t> mode;            // The desired working mode of the robot.
+    std::vector<uint8_t> mode;            // The desired working mode of each motor. The control modes are defined as follows:
+                                          //   0: Torque-position hybrid control mode
+                                          //   1: Velocity control mode
+                                          //   2: Position control mode
+                                          //   3: Torque control mode
     std::vector<float> q;                 // Vector storing the desired angles (in radians).
     std::vector<float> dq;                // Vector storing the desired velocities (in radians per second).
     std::vector<float> tau;               // Vector storing the desired output torque (in Newton meters).
@@ -148,18 +152,9 @@ namespace limxsdk
 #if defined(_WIN32) && defined(ERROR)
 #undef ERROR
 #endif
-    enum
-    {
-      OK = 0
-    };
-    enum
-    {
-      WARN = 1
-    };
-    enum
-    {
-      ERROR = 2
-    };
+    enum { OK = 0 };
+    enum { WARN = 1 };
+    enum { ERROR = 2 };
 
     uint64_t stamp;      // Timestamp in nanoseconds.
     int32_t level;       // Level associated with the diagnostic value.
@@ -169,6 +164,27 @@ namespace limxsdk
   };
   typedef std::shared_ptr<DiagnosticValue> DiagnosticValuePtr;
   typedef std::shared_ptr<DiagnosticValue const> DiagnosticValueConstPtr;
+
+  /**
+   * @struct TerrainData
+   *
+   * @brief Structure representing terrain data collected by the robot's sensors.
+   *
+   * This structure contains timestamp information along with serialized terrain-related data 
+   * (e.g., elevation values, slope parameters, or terrain point cloud coordinates) 
+   * in a double-precision vector format.
+   */
+  struct TerrainData
+  {
+    uint64_t stamp{0};               // Timestamp in nanoseconds
+    uint32_t height{0};              // Vertical dimension (rows) of the terrain data grid (in pixels/points)
+    uint32_t width{0};               // Horizontal dimension (columns) of the terrain data grid (in pixels/points)
+    uint32_t step{1};                // Number of bytes/elements between consecutive rows in the data vector (stride)
+    std::vector<double> data;        // Serialized terrain data (e.g., elevation values, slope angles, 3D XYZ coordinates)
+                                     // Data layout: row-major (row-by-row) order matching height/width dimensions
+  };
+  typedef std::shared_ptr<TerrainData> TerrainDataPtr;
+  typedef std::shared_ptr<TerrainData const> TerrainDataConstPtr;
 }
 
 #endif

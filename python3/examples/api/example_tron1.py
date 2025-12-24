@@ -27,7 +27,8 @@ class RobotReceiver:
               "\n  stamp: " + str(robot_state.stamp) + \
               "\n  tau: " + str(robot_state.tau) + \
               "\n  q: " + str(robot_state.q) + \
-              "\n  dq: " + str(robot_state.dq))
+              "\n  dq: " + str(robot_state.dq) + \
+              "\n  motor_names: " + str(robot_state.motor_names))
 
     # Callback function for receiving sensor joy data
     def sensorJoyCallback(self, sensor_joy: datatypes.SensorJoy):
@@ -68,7 +69,10 @@ if __name__ == '__main__':
 
     # Get motor number information
     motor_number = robot.getMotorNumber()
-
+    
+    # Get motor names information
+    motor_names = robot.getMotorNames()
+    
     # Create an instance of RobotReceiver to handle callbacks
     receiver = RobotReceiver()
 
@@ -90,11 +94,12 @@ if __name__ == '__main__':
         cmd_msg = datatypes.RobotCmd()
         cmd_msg.stamp = time.time_ns()  # Set the timestamp
         # Set default values for control mode, joint positions, velocities, torques, Kp, and Kd
-        cmd_msg.mode = [1.0 for _ in range(motor_number)]
+        cmd_msg.mode = [0 for _ in range(motor_number)]
         cmd_msg.q = [1.0 for _ in range(motor_number)]
         cmd_msg.dq = [1.0 for _ in range(motor_number)]
         cmd_msg.tau = [1.0 for _ in range(motor_number)]
         cmd_msg.Kp = [1.0 for _ in range(motor_number)]
         cmd_msg.Kd = [1.0 for _ in range(motor_number)]
+        cmd_msg.motor_names = ['' for _ in range(motor_number)]
         robot.publishRobotCmd(cmd_msg)  # Publish the robot command
         rate.sleep()  # Control loop frequency

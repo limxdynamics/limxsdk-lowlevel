@@ -66,6 +66,15 @@ namespace limxsdk
     virtual void subscribeRobotState(std::function<void(const RobotStateConstPtr &)> cb);
 
     /**
+     * @brief Virtual method for subscribing to robot command (RobotCmd) updates
+     * @details Register a callback function that will be invoked when updated robot command (RobotCmd) data is received;
+     *          Typical use case: Real-time collection, parsing and analysis of RobotCmd data during physical robot operation
+     * @param cb Callback function for command updates, which takes a constant smart pointer to RobotCmd (RobotCmdConstPtr)
+     *           as the input parameter and has no return value
+     */
+    virtual void subscribeRobotCmd(std::function<void(const RobotCmdConstPtr &)> cb);
+
+    /**
      * @brief Virtual method to publish a command to control the robot's actions.
      * @param cmd The RobotCmd object representing the desired robot command.
      * @return True if the command was successfully published, otherwise false.
@@ -178,13 +187,39 @@ namespace limxsdk
      */
     virtual void subscribeJsonMessage(std::function<void(const std::string &)> cb);
 
+    /**
+     * @brief Registers a callback to handle terrain data updates from the robot.
+     * 
+     * The callback will be invoked when the robot outputs new terrain-related data (e.g., elevation, slope, 
+     * or terrain point cloud data encapsulated in the TerrainData structure).
+     * 
+     * @param cb Callback function with signature:
+     *           void(const TerrainDataConstPtr &terrain_data)
+     *           where terrain_data is a constant shared pointer to a TerrainData structure containing:
+     *           - stamp: Nanosecond timestamp of terrain data acquisition
+     *           - data: A vector of doubles with serialized terrain data (e.g., height values, 
+     *                   coordinate points, or terrain feature parameters).
+     */
+    virtual void subscribeTerrainData(std::function<void(const TerrainDataConstPtr &)> cb);
+
+
+    /**
+     * @brief Virtual method to publish terrain data for robot simulation.
+     * @param data The TerrainData object containing terrain-related data (timestamp + serialized terrain metrics) 
+     *             to be published in the simulation environment.
+     * @return True if the terrain data was successfully published, otherwise false.
+     */
+    virtual bool publishTerrainDataForSim(const TerrainData &data);
+
   protected:
     std::vector<std::function<void(const ImuDataConstPtr &)>> imu_data_callback_;           // Callback function for handling IMU data updates.
     std::vector<std::function<void(const RobotStateConstPtr &)>> robot_state_callback_;     // Callback function for handling robot state updates.
-    std::vector<std::function<void(const RobotCmdConstPtr &)>> robot_cmd_callback_;         // Callback function for handling robot commands in simulation mode.
+    std::vector<std::function<void(const RobotCmdConstPtr &)>> robot_cmd_sim_callback_;     // Callback function for handling robot commands in simulation mode.
     std::vector<std::function<void(const SensorJoyConstPtr &)>> sensor_joy_callback_;       // Callback for handling joystick sensor inputs from the robot.
     std::vector<std::function<void(const DiagnosticValueConstPtr &)>> diagnostic_callback_; // Callback for handling diagnostic values from the robot.
     std::vector<std::function<void(const std::string &)>> json_message_callback_;           // Callback for handling JSON API responses and notification from the robot.
+    std::vector<std::function<void(const TerrainDataConstPtr &)>> terrain_data_callback_;   // Callback function for handling terrain data updates from the robot.
+    std::vector<std::function<void(const RobotCmdConstPtr &)>> robot_cmd_callback_;         // Callback function for handling robot commands in physical robot mode
   };
 }
 
