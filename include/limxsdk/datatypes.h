@@ -89,7 +89,14 @@ namespace limxsdk
   {
     RobotCmd() {}
     RobotCmd(int motor_num)
-        : mode(motor_num, 0), q(motor_num, 0.0), dq(motor_num, 0.0), tau(motor_num, 0.0), Kp(motor_num, 0.0), Kd(motor_num, 0.0), motor_names(motor_num, "") {}
+        : mode(motor_num, 0)
+        , q(motor_num, 0.0)
+        , dq(motor_num, 0.0)
+        , tau(motor_num, 0.0)
+        , Kp(motor_num, 0.0)
+        , Kd(motor_num, 0.0)
+        , motor_names(motor_num, "")
+        , parallel_solve_required(motor_num, true) {}
 
     void resize(int motor_num)
     {
@@ -100,6 +107,7 @@ namespace limxsdk
       Kp.resize(motor_num, 0.0);
       Kd.resize(motor_num, 0.0);
       motor_names.resize(motor_num, "");
+      parallel_solve_required.resize(motor_num, true);
     }
 
     uint64_t stamp;                       // Timestamp in nanoseconds, typically represents the time when this data was recorded or generated.
@@ -114,6 +122,7 @@ namespace limxsdk
     std::vector<float> Kp;                // Vector storing the desired position stiffness (in Newton meters per radian).
     std::vector<float> Kd;                // Vector storing the desired velocity stiffness (in Newton meters per radian per second).
     std::vector<std::string> motor_names; // Vector storing the names of the motors
+    std::vector<bool> parallel_solve_required; // Flag indicating whether parallel solving is required for each motor
   };
   typedef std::shared_ptr<RobotCmd> RobotCmdPtr;
   typedef std::shared_ptr<RobotCmd const> RobotCmdConstPtr;

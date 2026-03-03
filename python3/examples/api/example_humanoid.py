@@ -92,6 +92,7 @@ if __name__ == '__main__':
         cmd_msg.tau = [1.0 for _ in range(motor_number)]
         cmd_msg.Kp = [1.0 for _ in range(motor_number)]
         cmd_msg.Kd = [1.0 for _ in range(motor_number)]
+        cmd_msg.parallel_solve_required = [True for _ in range(motor_number)]
         cmd_msg.motor_names = motor_names
         robot.publishRobotCmd(cmd_msg)  # Publish the robot command
         rate.sleep()  # Control loop frequency
