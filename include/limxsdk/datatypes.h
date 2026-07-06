@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file datatypes.h
  *
  * @brief This file contains the declarations of classes and structures related to robotics.
@@ -173,6 +173,63 @@ namespace limxsdk
   };
   typedef std::shared_ptr<DiagnosticValue> DiagnosticValuePtr;
   typedef std::shared_ptr<DiagnosticValue const> DiagnosticValueConstPtr;
+
+  /**
+   * @struct GripperCmd
+   *
+   * @brief Structure representing a command to drive a multi-finger gripper.
+   *
+   * Each vector is indexed per finger. For Tron2 the layout is [left, right] (size=2).
+   * Values are normalized percentages in the range [0, 100]:
+   *   - opening : commanded opening (0 = fully closed, 100 = fully open)
+   *   - speed   : commanded motion speed
+   *   - force   : commanded grasping force
+   *
+   * The interface is intentionally generic (variable-length vectors) so that 2F / 3F / 5F
+   * grippers can share the same data structure.
+   */
+  struct GripperCmd
+  {
+    GripperCmd() {}
+    explicit GripperCmd(int finger_num)
+        : opening(finger_num, 0.0f), speed(finger_num, 0.0f), force(finger_num, 0.0f) {}
+
+    void resize(int finger_num)
+    {
+      opening.resize(finger_num, 0.0f);
+      speed.resize(finger_num, 0.0f);
+      force.resize(finger_num, 0.0f);
+    }
+
+    uint64_t stamp{0};            // Timestamp in nanoseconds.
+    std::vector<float> opening;   // Commanded opening per finger, in [0, 100] (%).
+    std::vector<float> speed;     // Commanded motion speed per finger, in [0, 100] (%).
+    std::vector<float> force;     // Commanded grasping force per finger, in [0, 100] (%).
+  };
+  typedef std::shared_ptr<GripperCmd> GripperCmdPtr;
+  typedef std::shared_ptr<GripperCmd const> GripperCmdConstPtr;
+
+  /**
+   * @struct GripperState
+   *
+   * @brief Structure representing the feedback state of a multi-finger gripper.
+   *
+   * Index layout follows the command (e.g. Tron2: [left, right]).
+   */
+  struct GripperState
+  {
+    GripperState() {}
+    explicit GripperState(int finger_num)
+        : q(finger_num, 0.0f), v(finger_num, 0.0f), vd(finger_num, 0.0f), tau(finger_num, 0.0f) {}
+
+    uint64_t stamp{0};        // Timestamp in nanoseconds.
+    std::vector<float> q;     // Current opening feedback per finger (%).
+    std::vector<float> v;     // Current motion speed feedback per finger.
+    std::vector<float> vd;    // Desired/raw velocity feedback (controller-defined).
+    std::vector<float> tau;   // Current force/torque feedback per finger.
+  };
+  typedef std::shared_ptr<GripperState> GripperStatePtr;
+  typedef std::shared_ptr<GripperState const> GripperStateConstPtr;
 
   /**
    * @struct TerrainData

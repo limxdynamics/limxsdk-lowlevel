@@ -47,10 +47,11 @@ class RobotReceiver:
               "\n  message: " + diagnostic_value.message)
 
 if __name__ == '__main__':
-    # Create a Robot instance of type PointFoot
-    robot = Robot(RobotType.PointFoot)
+    # Create a Robot instance of type Tron2 
+    robot = Robot(RobotType.Tron2)
 
-    robot_ip = "127.0.0.1"
+    #robot_ip = "127.0.0.1"
+    robot_ip = "10.192.1.2"
     # Check if command-line argument is provided for robot IP
     if len(sys.argv) > 1:
         robot_ip = sys.argv[1]
@@ -58,6 +59,14 @@ if __name__ == '__main__':
     # Initialize the robot with robot_ip
     if not robot.init(robot_ip):
         sys.exit()
+
+    # Set the robot's light effect to STATIC_RED
+    print("Set light effect to STATIC_RED: " + str(robot.setRobotLightEffect(datatypes.LightEffect.STATIC_RED)))
+    time.sleep(5)
+
+    # Set the robot's light effect to FAST_FLASH_YELLOW
+    print("Set light effect to FAST_FLASH_YELLOW: " + str(robot.setRobotLightEffect(datatypes.LightEffect.FAST_FLASH_YELLOW)))
+    time.sleep(5)
 
     # Get motor number information
     motor_number = robot.getMotorNumber()
