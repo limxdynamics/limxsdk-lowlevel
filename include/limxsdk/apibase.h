@@ -95,6 +95,20 @@ namespace limxsdk
     virtual bool publishRobotStateForSim(const RobotState &state);
 
     /**
+     * @brief Simulator-side: subscribe to gripper commands published by the controller
+     *        (topic "/limx/2F-gripper/cmd"). The simulator uses this to drive its gripper.
+     * @param cb Callback invoked with each incoming GripperCmd.
+     */
+    virtual void subscribeGripperCmdForSim(std::function<void(const GripperCmdConstPtr &)> cb);
+
+    /**
+     * @brief Simulator-side: publish gripper state feedback (topic "/limx/2F-gripper/state").
+     * @param state The gripper state to publish.
+     * @return True if publishing is successful, false otherwise.
+     */
+    virtual bool publishGripperStateForSim(const GripperState &state);
+
+    /**
      * @brief Virtual method to publish IMU (Inertial Measurement Unit) data to the motion control algorithm for simulation.
      * The order of IMU data is as follows:
      *        Accelerometer: imu.acc
@@ -215,6 +229,7 @@ namespace limxsdk
     std::vector<std::function<void(const ImuDataConstPtr &)>> imu_data_callback_;           // Callback function for handling IMU data updates.
     std::vector<std::function<void(const RobotStateConstPtr &)>> robot_state_callback_;     // Callback function for handling robot state updates.
     std::vector<std::function<void(const RobotCmdConstPtr &)>> robot_cmd_sim_callback_;     // Callback function for handling robot commands in simulation mode.
+    std::vector<std::function<void(const GripperCmdConstPtr &)>> gripper_cmd_sim_callback_; // Callback for handling gripper commands in simulation mode.
     std::vector<std::function<void(const SensorJoyConstPtr &)>> sensor_joy_callback_;       // Callback for handling joystick sensor inputs from the robot.
     std::vector<std::function<void(const DiagnosticValueConstPtr &)>> diagnostic_callback_; // Callback for handling diagnostic values from the robot.
     std::vector<std::function<void(const std::string &)>> json_message_callback_;           // Callback for handling JSON API responses and notification from the robot.
