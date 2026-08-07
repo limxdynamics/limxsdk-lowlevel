@@ -107,3 +107,92 @@ sudo apt install ros-noetic-urdf \
 ### 3.3 参考例程
 
 Python 接口参考例程: https://github.com/limxdynamics/limxsdk-lowlevel/blob/master/python3/amd64/example.py
+
+## 4. C++ 快速入门
+
+`examples/` 目录包含可直接编译的 C++ 示例，自带 `CMakeLists.txt`。
+
+### 编译和运行
+
+```bash
+cd limxsdk-lowlevel
+mkdir build && cd build
+cmake ..
+make
+
+# 控制单个关节
+./examples/pf_joint_move <robot_ip>
+
+# 同时控制所有关节
+./examples/pf_groupJoints_move <robot_ip>
+```
+
+仿真场景下使用 `127.0.0.1` 作为机器人 IP。运行前请先设置机器人型号，例如 `export ROBOT_TYPE=SF_TRON1A`（可用型号见 [tron1-robot-description](https://github.com/limxdynamics/tron1-robot-description)）。
+
+### 示例代码原理
+
+每个示例继承自 `PFControllerBase`，重写 `init()` 和 `starting()` 方法：
+
+```cpp
+#include "pf_controller_base.h"
+
+class PFJointMove : public PFControllerBase {
+public:
+    void init() {
+        // 等待标定完成后才能发送关节指令
+        pf_->subscribeDiagnosticValue([&](const limxsdk::DiagnosticValueConstPtr& msg) {
+            if (msg->name == "calibration" && msg->code != 0) abort();
+        });
+    }
+
+    void starting() {
+        while (true) {
+            if (robotstate_on_) {
+                // 从机器人状态读取当前关节位置
+                double currentPos = robot_state_.q[joint_id];
+                // 向单个关节发送位置指令
+                singleJointController(joint_id, kp, kd, targetPos, targetVel, targetTorque);
+            }
+        }
+    }
+};
+```
+
+`PFControllerBase` 提供的关键方法：
+- `singleJointController(id, kp, kd, pos, vel, torque)` — 控制单个关节
+- `groupJointController(kp, kd, pos, vel, torque)` — 控制全部关节
+- `robot_state_.q[id]` — 读取当前关节位置
+- `robotstate_on_` — 机器人状态数据是否就绪
+- `pf_->subscribeDiagnosticValue(cb)` — 订阅诊断事件
+
+## 5. API 概览
+
+SDK 在 `limxsdk` 命名空间下提供了针对不同机器人类型的控制类（均为单例模式）：
+
+| 类 | 头文件 | 适用机器人 |
+|-------|--------|------------|
+| `limxsdk::PointFoot` | `pointfoot.h` | TRON1 双足 / 轮足 |
+| `limxsdk::Humanoid` | `humanoid.h` | 人形机器人 (Oli) |
+| `limxsdk::Wheellegged` | `wheellegged.h` | 轮腿平台 |
+| `limxsdk::Tron2` | `tron2.h` | TRON2 |
+
+所有类均继承自 `ApiBase`，提供以下方法：
+
+```cpp
+auto* robot = limxsdk::PointFoot::getInstance();
+robot->init("127.0.0.1");                 // 连接机器人（仿真用 127.0.0.1）
+
+// 基于回调的读取（订阅模式）
+robot->subscribeImuData([](auto& imu) { /* 处理 IMU 数据 */ });
+robot->subscribeRobotState([](auto& state) { /* state.q[i] = 关节位置 */ });
+robot->subscribeDiagnosticValue([](auto& msg) { /* 标定状态、错误等 */ });
+
+// 指令下发
+robot->publishRobotCmd(cmd);              // 发送关节指令
+robot->setRobotLightEffect(effect);       // 控制机器人灯效
+
+// 工具方法
+int n = robot->getMotorNumber();          // 获取电机数量
+auto names = robot->getMotorNames();      // 获取电机/关节名称
+```
+
