@@ -57,7 +57,7 @@ git clone https://github.com/limxdynamics/limxsdk-lowlevel.git
 
 ```bash
 cd ~/limx_ws/src
-git clone https://github.com/limxdynamics/pointfoot-gazebo-ros.git
+git clone https://github.com/limxdynamics/tron1-gazebo-ros.git
 ```
 
 #### Clone robot model description files:
