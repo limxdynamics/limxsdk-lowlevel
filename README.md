@@ -57,7 +57,7 @@ git clone https://github.com/limxdynamics/limxsdk-lowlevel.git
 
 ```bash
 cd ~/limx_ws/src
-git clone https://github.com/limxdynamics/tron1-gazebo-ros.git
+git clone https://github.com/limxdynamics/pointfoot-gazebo-ros.git
 ```
 
 #### Clone robot model description files:
@@ -121,92 +121,3 @@ pip install python3/win/limxsdk-*-py3-none-any.whl
 
 You can refer to the example Python script here:  
 👉 [Example Code on GitHub](https://github.com/limxdynamics/limxsdk-lowlevel/blob/master/python3/amd64/example.py)
-
-## 4. C++ Quick Start
-
-The `examples/` directory contains ready-to-build C++ examples with their own `CMakeLists.txt`.
-
-### Build and Run
-
-```bash
-cd limxsdk-lowlevel
-mkdir build && cd build
-cmake ..
-make
-
-# Control a single joint
-./examples/pf_joint_move <robot_ip>
-
-# Control all joints simultaneously
-./examples/pf_groupJoints_move <robot_ip>
-```
-
-For simulation, use `127.0.0.1` as the robot IP. Before running, set your robot type, e.g. `export ROBOT_TYPE=SF_TRON1A` (see available models in [tron1-robot-description](https://github.com/limxdynamics/tron1-robot-description)).
-
-### How the Examples Work
-
-Each example inherits from `PFControllerBase` and overrides `init()` and `starting()`:
-
-```cpp
-#include "pf_controller_base.h"
-
-class PFJointMove : public PFControllerBase {
-public:
-    void init() {
-        // Wait for calibration before commanding joints
-        pf_->subscribeDiagnosticValue([&](const limxsdk::DiagnosticValueConstPtr& msg) {
-            if (msg->name == "calibration" && msg->code != 0) abort();
-        });
-    }
-
-    void starting() {
-        while (true) {
-            if (robotstate_on_) {
-                // Read current joint position from robot state
-                double currentPos = robot_state_.q[joint_id];
-                // Send position command to a single joint
-                singleJointController(joint_id, kp, kd, targetPos, targetVel, targetTorque);
-            }
-        }
-    }
-};
-```
-
-Key methods provided by `PFControllerBase`:
-- `singleJointController(id, kp, kd, pos, vel, torque)` — control one joint
-- `groupJointController(kp, kd, pos, vel, torque)` — control all joints
-- `robot_state_.q[id]` — read current joint position
-- `robotstate_on_` — true when robot state data is available
-- `pf_->subscribeDiagnosticValue(cb)` — subscribe to diagnostic events
-
-## 5. API Overview
-
-The SDK provides robot-specific classes (all singletons) under the `limxsdk` namespace:
-
-| Class | Header | Robot Type |
-|-------|--------|------------|
-| `limxsdk::PointFoot` | `pointfoot.h` | TRON1 biped / wheel-foot |
-| `limxsdk::Humanoid` | `humanoid.h` | Humanoid (Oli) |
-| `limxsdk::Wheellegged` | `wheellegged.h` | Wheel-legged platforms |
-| `limxsdk::Tron2` | `tron2.h` | TRON2 |
-
-Each robot class inherits from `ApiBase` and provides:
-
-```cpp
-auto* robot = limxsdk::PointFoot::getInstance();
-robot->init("127.0.0.1");                 // Connect to robot (use 127.0.0.1 for sim)
-
-// Subscription-based reads (callback pattern)
-robot->subscribeImuData([](auto& imu) { /* handle IMU */ });
-robot->subscribeRobotState([](auto& state) { /* state.q[i] = joint position */ });
-robot->subscribeDiagnosticValue([](auto& msg) { /* calibration, errors, etc. */ });
-
-// Command-based writes
-robot->publishRobotCmd(cmd);              // Send joint commands to the robot
-robot->setRobotLightEffect(effect);       // Control robot LEDs
-
-// Utility
-int n = robot->getMotorNumber();          // Number of motors
-auto names = robot->getMotorNames();      // Motor/joint names
-```
-
