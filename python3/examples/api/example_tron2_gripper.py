@@ -3,8 +3,9 @@
 
 @brief Standalone example for the Tron2 2F-gripper low-level SDK API.
 
-Drives "/limx/2F-gripper/cmd" via Robot.publishGripperCmd() and prints the
-"/limx/2F-gripper/state" feedback via Robot.subscribeGripperState().
+Drives "/limx/2F-gripper/cmd" via Robot.publishGripperCmd(), observes the
+command with Robot.subscribeGripperCmd(), and prints state feedback via
+Robot.subscribeGripperState().
 
 Usage:
     python3 example_tron2_gripper.py [robot_ip]
@@ -38,6 +39,11 @@ def main():
         print("[gripper-state] stamp={} q={} v={} tau={}".format(
             state.stamp, state.q, state.v, state.tau))
 
+    def on_gripper_cmd(cmd: datatypes.GripperCmd):
+        print("[gripper-cmd-rx] stamp={} opening={} speed={} force={}".format(
+            cmd.stamp, cmd.opening, cmd.speed, cmd.force))
+
+    robot.subscribeGripperCmd(on_gripper_cmd)
     robot.subscribeGripperState(on_gripper_state)
 
     cmd = datatypes.GripperCmd()
