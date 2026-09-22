@@ -9,7 +9,9 @@
 #ifndef _LIMX_SDK_MACROS_H_
 #define _LIMX_SDK_MACROS_H_
 
-#if defined(_MSC_VER)
+#if defined(LIMX_SDK_DISABLE_EXPORT)
+#define LIMX_SDK_API
+#elif defined(_MSC_VER)
 #define LIMX_SDK_API __declspec(dllexport)
 #elif __GNUC__ >= 4
 #define LIMX_SDK_API __attribute__((visibility("default")))

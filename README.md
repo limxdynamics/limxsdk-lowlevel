@@ -102,19 +102,19 @@ Please install the appropriate `.whl` file depending on your platform:
 #### On Linux x86_64:
 
 ```bash
-pip install python3/amd64/limxsdk-*-py3-none-any.whl
+pip install python3/amd64/limxsdk-*.whl
 ```
 
 #### On Linux aarch64:
 
 ```bash
-pip install python3/aarch64/limxsdk-*-py3-none-any.whl
+pip install python3/aarch64/limxsdk-*.whl
 ```
 
 #### On Windows:
 
 ```bash
-pip install python3/win/limxsdk-*-py3-none-any.whl
+pip install python3/win/limxsdk-*.whl
 ```
 
 ### 3.3 Python Example

@@ -89,19 +89,19 @@ sudo apt install ros-noetic-urdf \
 - Linux x86_64 平台
 
   ```Bash
-  pip install python3/amd64/limxsdk-*-py3-none-any.whl
+  pip install python3/amd64/limxsdk-*.whl
   ```
 
 - Linux aarch64 平台
 
   ```Bash
-  pip install python3/aarch64/limxsdk-*-py3-none-any.whl
+  pip install python3/aarch64/limxsdk-*.whl
   ```
 
 - Windows  平台
 
   ```Bash
-  pip install python3/win/limxsdk-*-py3-none-any.whl
+  pip install python3/win/limxsdk-*.whl
   ```
 
 ### 3.3 参考例程
