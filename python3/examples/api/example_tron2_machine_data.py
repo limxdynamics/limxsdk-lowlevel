@@ -9,8 +9,8 @@ throttled summary of each one:
     Robot.subscribeGripperCmd()    -> "/limx/2F-gripper/cmd"  (command read-back)
     Robot.subscribeLifterState()   -> "/lifter/state"         (raw controller units)
     Robot.subscribeLifterStatus()  -> "/lifter/status"        (mm + fault flags)
-    Robot.subscribeChassisState()  -> "/chassis_state"         (mobile dual-arm only)
-    Robot.subscribeArmEePose()     -> "/arm_pose"
+    Robot.subscribeChassisState()  -> "/chassis/vel/state"     (mobile dual-arm only)
+    Robot.subscribeArmEePose()     -> "/arm/ee_pose_state"
     Robot.subscribeDexHandState()  -> "/brainco2/hand/state"
     Robot.subscribeVrState()       -> "/vr_cmd"
     Robot.subscribeTeleopState()   -> "/diagnostics_value" ("TeleOperation")
@@ -24,7 +24,7 @@ The write channels are opt-in, because they move real hardware:
     --send-hand-cmd    one open-hand command on "/brainco2/hand/cmd"
     --drive-chassis    5 s of slow forward motion on "/sdk_cmd_vel" (10 Hz)
     --drive-lifter     5 s of slow raise then a stop frame on "/sdk_lifter_vel"
-    --lifter-pos=<mm>  5 s of position streaming on "/sdk_lifter_pos"
+    --lifter-pos=<mm>  5 s of position streaming on "/lifter/pos/cmd"
 
 Chassis and lifter inputs are STREAMING: the base stops on its own roughly
 300 ms after the frames stop, which is why the loops below keep publishing

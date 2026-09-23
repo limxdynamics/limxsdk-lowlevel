@@ -133,7 +133,7 @@ namespace limxsdk
     /**
      * @brief Subscribe to feedback from the Tron2 2-finger gripper.
      *
-     * The state is fed from "/limx/2F-gripper/state" (controller_msgs/JointState, na=2),
+     * The state is fed from "/limx/2F-gripper/state" (sensor_msgs/JointState, two slots),
      * dispatched to the callback by a dedicated background thread.
      *
      * @param cb  Callback invoked when a new GripperState arrives.
@@ -182,7 +182,7 @@ namespace limxsdk
     /**
      * @brief Subscribe to wheeled-base motion feedback.
      *
-     * Fed from "/chassis_state" (std_msgs/Float32MultiArray) at ~30 Hz. See
+     * Fed from "/chassis/vel/state" (geometry_msgs/TwistStamped) at ~30 Hz. See
      * ChassisState for the field layout and for why the timestamp is a receive time.
      *
      * @param cb  Callback invoked when a new ChassisState arrives.
@@ -192,7 +192,7 @@ namespace limxsdk
     /**
      * @brief Subscribe to the measured end-effector pose of both arms.
      *
-     * Fed from "/arm_pose" (std_msgs/Float32MultiArray, 14 floats). See ArmEePose for
+     * Fed from "/arm/ee_pose_state" (geometry_msgs/PoseArray, two poses). See ArmEePose for
      * the index layout, the quaternion order and the reference-frame caveat.
      *
      * @param cb  Callback invoked when a new ArmEePose arrives.
@@ -228,6 +228,55 @@ namespace limxsdk
      * @return     true if the command was successfully published.
      */
     bool publishDexHandCmd(const DexHandCmd &cmd);
+
+    /**
+     * @brief Subscribe to touch-enabled dexterous-hand feedback.
+     *
+     * Fed from "/brainco2/touch/hand/state" (hand_msgs/TactileHandState). Carries
+     * everything subscribeDexHandState() reports plus one TactileFingers per hand
+     * (normal / tangential force, direction, proximity, per-channel status).
+     * Use this instead of subscribeDexHandState() when the robot has touch hands —
+     * the two feed different topics and only one of them is live at a time.
+     *
+     * @param cb  Callback invoked when a new TactileHandState arrives.
+     */
+    void subscribeTactileHandState(std::function<void(const TactileHandStateConstPtr &)> cb);
+
+    /**
+     * @brief Publish a command to the touch-enabled dexterous hand pair.
+     *
+     * Published on "/brainco2/touch/hand/cmd" (hand_msgs/TactileHandCmd). Finger
+     * control follows publishDexHandCmd(); the tactile block additionally drives the
+     * sensors themselves. Per hand, an empty tactile vector leaves that aspect alone,
+     * so sending finger motion without touching the sensor configuration is fine.
+     *
+     * @param cmd  The tactile dexterous-hand command to publish.
+     * @return     true if the command was successfully published.
+     */
+    bool publishTactileHandCmd(const TactileHandCmd &cmd);
+
+    /**
+     * @brief Subscribe to Wuji dexterous-hand feedback.
+     *
+     * Fed from "/wuji/hand/state" (hand_msgs/HandState). Same message type, DTO and
+     * left/right slot convention as the BrainCo2 pair — only the topic differs, so a
+     * robot fitted with Wuji hands uses this call instead of subscribeDexHandState().
+     *
+     * @param cb  Callback invoked when a new DexHandState arrives.
+     */
+    void subscribeWujiHandState(std::function<void(const DexHandStateConstPtr &)> cb);
+
+    /**
+     * @brief Publish a command to the Wuji dexterous-hand pair.
+     *
+     * Published on "/wuji/hand/cmd" (hand_msgs/HandCmd). Payload rules are identical to
+     * publishDexHandCmd(); set @c cmd.hand_type to "wuji/hand" so downstream consumers
+     * can tell the vendor apart.
+     *
+     * @param cmd  The dexterous-hand command to publish.
+     * @return     true if the command was successfully published.
+     */
+    bool publishWujiHandCmd(const DexHandCmd &cmd);
 
     /**
      * @brief Subscribe to VR head-set / hand-controller state.
@@ -297,7 +346,7 @@ namespace limxsdk
     /**
      * @brief Drive the lifting column to a height.
      *
-     * Published on "/sdk_lifter_pos" (controller_msgs/JointCmd) as @c q[0] with
+     * Published on "/lifter/pos/cmd" (controller_msgs/JointCmd) as @c q[0] with
      * @c v[0] as the speed limit.
      *
      * @warning STREAMING interface, same 300 ms watchdog as publishLifterVel().

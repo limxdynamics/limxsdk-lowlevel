@@ -1,0 +1,24 @@
+robot_ip: "127.0.0.1"
+robot_type: "Humanoid"
+
+libraries:
+  - library: "libexample_abilities"
+    abilities:
+      - name: "turn_left"
+        type: "examples::TurnAbility"
+        autostart: false
+        config:
+          angular_speed: 0.3
+          target_angle: 90.0
+            
+      - name: "sensor_monitor"
+        type: "examples::SensorAbility"
+        autostart: true
+        config:
+          update_rate: 1.0
+            
+      - name: "battery_monitor"
+        type: "examples::BatteryAbility"
+        autostart: true
+        config:
+          low_threshold: 15.0

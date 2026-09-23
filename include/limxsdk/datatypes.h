@@ -215,6 +215,10 @@ namespace limxsdk
    * @brief Structure representing the feedback state of a multi-finger gripper.
    *
    * Index layout follows the command (e.g. Tron2: [left, right]).
+   *
+   * @note Fed from "/limx/2F-gripper/state", which now carries sensor_msgs/JointState:
+   *       q maps to position, v to velocity and tau to effort. That message has no
+   *       counterpart for the old controller_msgs `vd`, so @c vd is always empty now.
    */
   struct GripperState
   {
@@ -225,7 +229,7 @@ namespace limxsdk
     uint64_t stamp{0};        // Timestamp in nanoseconds.
     std::vector<float> q;     // Current opening feedback per finger (%).
     std::vector<float> v;     // Current motion speed feedback per finger.
-    std::vector<float> vd;    // Desired/raw velocity feedback (controller-defined).
+    std::vector<float> vd;    // Always empty since the move to sensor_msgs/JointState.
     std::vector<float> tau;   // Current force/torque feedback per finger.
   };
   typedef std::shared_ptr<GripperState> GripperStatePtr;
@@ -349,15 +353,15 @@ namespace limxsdk
    *
    * @brief Structure representing the motion state of the wheeled mobile base.
    *
-   * Fed from the "/chassis_state" topic (std_msgs/Float32MultiArray, published at
-   * ~30 Hz by the chassis node). The wire layout is a flat float array:
-   *   data[0] = linear velocity
-   *   data[1] = angular velocity
-   *   data[2] = steering angle
+   * Fed from the "/chassis/vel/state" topic (geometry_msgs/TwistStamped, published at
+   * ~30 Hz by the chassis node):
+   *   twist.linear.x  = linear velocity
+   *   twist.angular.z = angular velocity
    *
-   * The three named fields are decoded copies of data[0..2]; @c data keeps the raw
-   * array so that a future firmware that appends more entries stays readable without
-   * an SDK change.
+   * @c data mirrors the first two values so callers that used to read the flat array
+   * of the retired "/chassis_state" keep working. @c steering_angle has no counterpart
+   * on the new wire format and stays at 0 — a Twist describes velocity only, and the
+   * Ackermann steering angle can be derived from v and omega when needed.
    *
    * @note std_msgs/Float32MultiArray carries no header, so @c stamp is the time at
    *       which this SDK received the frame, not a publisher timestamp.
@@ -369,7 +373,7 @@ namespace limxsdk
     uint64_t stamp{0};              // SDK receive time in nanoseconds (no publisher stamp available).
     float linear_velocity{0.0f};    // data[0]: linear velocity of the base.
     float angular_velocity{0.0f};   // data[1]: angular velocity of the base.
-    float steering_angle{0.0f};     // data[2]: current steering angle.
+    float steering_angle{0.0f};     // Always 0: not carried by TwistStamped.
     std::vector<float> data;        // Raw Float32MultiArray payload as received.
   };
   typedef std::shared_ptr<ChassisState> ChassisStatePtr;
@@ -380,21 +384,25 @@ namespace limxsdk
    *
    * @brief Structure representing the measured end-effector pose of both arms.
    *
-   * Fed from the "/arm_pose" topic (std_msgs/Float32MultiArray). The wire layout is a
-   * flat array of 14 floats, 7 per arm, ordered [x, y, z, qw, qx, qy, qz]:
-   *   data[0..2]   left  position
-   *   data[3..6]   left  orientation quaternion (w, x, y, z)
-   *   data[7..9]   right position
-   *   data[10..13] right orientation quaternion (w, x, y, z)
+   * Fed from the "/arm/ee_pose_state" topic (geometry_msgs/PoseArray). The controller
+   * always publishes exactly two poses: poses[0] is the left end effector, poses[1] the
+   * right one, both expressed in the frame named by header.frame_id (base_Link on Tron2).
    *
-   * @note The quaternion order is w-first, matching the manipulation controller's
-   *       Cartesian servo protocol (xyz + qwxyz).
-   * @note std_msgs/Float32MultiArray carries no header, so @c stamp is the SDK
-   *       receive time.
-   * @note The reference frame of these poses is defined by the manipulation
-   *       controller and is not declared on the wire. Treat the values as
-   *       controller-frame and confirm the frame with the controller team before
-   *       using them for absolute positioning.
+   * The named fields below keep the historical layout of the retired "/arm_pose"
+   * Float32MultiArray so existing callers do not have to change:
+   *   left_position / right_position   position (x, y, z)
+   *   left_quat / right_quat           orientation, w-first (w, x, y, z)
+   *   data                             the same values flattened to 14 floats,
+   *                                    [left xyz + left wxyz, right xyz + right wxyz]
+   *
+   * @note The quaternion order in these fields is w-first, matching the manipulation
+   *       controller's Cartesian servo protocol (xyz + qwxyz). PoseArray itself uses
+   *       the named x/y/z/w fields, so the reordering happens inside the SDK.
+   * @note PoseArray carries a header, so @c stamp is the publisher timestamp rather
+   *       than the SDK receive time.
+   * @note The reference frame is declared on the wire via header.frame_id. Tron2
+   *       publishes base_Link; confirm the frame with the controller team before
+   *       using the values for absolute positioning.
    */
   struct ArmEePose
   {
@@ -412,13 +420,13 @@ namespace limxsdk
       }
     }
 
-    uint64_t stamp{0};         // SDK receive time in nanoseconds (no publisher stamp available).
-    bool valid{false};         // True when the frame carried the full 14-float layout.
+    uint64_t stamp{0};         // Publisher timestamp in nanoseconds (PoseArray header.stamp).
+    bool valid{false};         // True when the frame carried both end-effector poses.
     float left_position[3];    // Left end-effector position (x, y, z).
     float left_quat[4];        // Left end-effector orientation (w, x, y, z).
     float right_position[3];   // Right end-effector position (x, y, z).
     float right_quat[4];       // Right end-effector orientation (w, x, y, z).
-    std::vector<float> data;   // Raw Float32MultiArray payload as received.
+    std::vector<float> data;   // Legacy flat layout, 14 floats (xyz + wxyz per arm).
   };
   typedef std::shared_ptr<ArmEePose> ArmEePosePtr;
   typedef std::shared_ptr<ArmEePose const> ArmEePoseConstPtr;
@@ -488,6 +496,85 @@ namespace limxsdk
   };
   typedef std::shared_ptr<DexHandState> DexHandStatePtr;
   typedef std::shared_ptr<DexHandState const> DexHandStateConstPtr;
+
+  /**
+   * @struct TactileFingers
+   *
+   * @brief Per-hand tactile readings of a touch-enabled dexterous hand.
+   *
+   * All vectors are indexed by tactile channel and share the same length, which the
+   * hand firmware decides (5 on the BrainCo2 touch hand). They are passed through
+   * as received: no padding, no unit conversion.
+   */
+  struct TactileFingers
+  {
+    std::vector<std::string> channel_names;  // Channel identifiers reported by the hand.
+    std::vector<float> normal_force;         // Normal force per channel, in N.
+    std::vector<float> tangential_force;     // Tangential force per channel, in N.
+    std::vector<float> direction_angle;      // Tangential force direction per channel, in degrees.
+    std::vector<uint32_t> approximate_value; // Raw proximity reading per channel.
+    std::vector<uint16_t> tactile_state;     // Per-channel sensor status word.
+  };
+
+  /**
+   * @struct TactileHandState
+   *
+   * @brief Feedback of a pair of touch-enabled dexterous hands.
+   *
+   * Fed from "/brainco2/touch/hand/state" (hand_msgs/TactileHandState). This is the
+   * plain DexHandState plus one TactileFingers per hand; index layout is the same
+   * [left, right]. A robot fitted with non-touch hands uses DexHandState instead.
+   */
+  struct TactileHandState
+  {
+    TactileHandState() : ctrl_mode(2, 0), hands(2), tactile(2) {}
+
+    uint64_t stamp{0};                    // Timestamp in nanoseconds (from the message header).
+    std::string hand_type;                // Hand model identifier reported by the hand.
+    std::vector<uint8_t> ctrl_mode;       // Active control mode per hand, size 2: [left, right].
+    std::vector<DexHandFingers> hands;    // Finger feedback per hand, size 2: [left, right].
+    std::vector<TactileFingers> tactile;  // Tactile feedback per hand, size 2: [left, right].
+  };
+  typedef std::shared_ptr<TactileHandState> TactileHandStatePtr;
+  typedef std::shared_ptr<TactileHandState const> TactileHandStateConstPtr;
+
+  /**
+   * @struct TactileSwitches
+   *
+   * @brief Per-hand tactile control block of a touch-enabled dexterous hand.
+   *
+   * Vectors are indexed by tactile channel, same length convention as TactileFingers.
+   * Leaving a vector empty means "do not touch that aspect on this hand".
+   */
+  struct TactileSwitches
+  {
+    std::vector<std::string> channel_names;    // Channel identifiers, optional.
+    std::vector<uint8_t> tactile_switch;       // 1 = enable the channel, 0 = disable.
+    std::vector<uint8_t> channel_reset;        // 1 = reset the channel.
+    std::vector<uint8_t> calibration_trigger;  // 1 = trigger calibration on the channel.
+  };
+
+  /**
+   * @struct TactileHandCmd
+   *
+   * @brief Command for a pair of touch-enabled dexterous hands.
+   *
+   * Published on "/brainco2/touch/hand/cmd" (hand_msgs/TactileHandCmd). Finger control
+   * follows the same rules as DexHandCmd; the extra TactileSwitches block drives the
+   * tactile sensors themselves (enable / reset / calibrate) and is independent of the
+   * finger motion mode.
+   */
+  struct TactileHandCmd
+  {
+    TactileHandCmd() : ctrl_mode(2, 0), hands(2), tactile(2) {}
+
+    std::string hand_type;                 // Hand model identifier, e.g. "brainco2/hand".
+    std::vector<uint8_t> ctrl_mode;        // Control mode per hand, size 2: [left, right].
+    std::vector<DexHandFingers> hands;     // Finger command per hand, size 2: [left, right].
+    std::vector<TactileSwitches> tactile;  // Tactile control per hand, size 2: [left, right].
+  };
+  typedef std::shared_ptr<TactileHandCmd> TactileHandCmdPtr;
+  typedef std::shared_ptr<TactileHandCmd const> TactileHandCmdConstPtr;
 
   /**
    * @struct VrState
