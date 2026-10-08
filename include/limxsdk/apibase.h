@@ -9,6 +9,7 @@
 #ifndef _LIMX_SDK_INTERFACE_H_
 #define _LIMX_SDK_INTERFACE_H_
 
+#include <atomic>
 #include <string>
 #include <functional>
 #include "limxsdk/macros.h"
@@ -225,7 +226,46 @@ namespace limxsdk
      */
     virtual bool publishTerrainDataForSim(const TerrainData &data);
 
+    /**
+     * @brief Choose whether RobotCmd::motor_names is ignored or validated.
+     *
+     * Applies to the robots that carry per-motor names in their command
+     * message: Humanoid, Tron2 and Centaur. PointFoot / Wheellegged never
+     * look at the field.
+     *
+     * @param ignore
+     *   true  (default) - the field is ignored entirely: no length check, no
+     *                     order check, and nameless entries go out on the
+     *                     wire, matching the joint state the robot itself
+     *                     publishes. This path cannot fail on account of
+     *                     motor_names, so code written before the field
+     *                     existed keeps working unchanged.
+     *   false           - strict mode: the length must equal the motor number,
+     *                     and Centaur additionally requires the sequence to
+     *                     match the latest RobotState element for element.
+     *                     A violation prints the offending field and makes
+     *                     publishRobotCmd return false.
+     *
+     * Note that robots currently publish /motor/state with an empty names[].
+     * Strict mode therefore has nothing to compare against and will reject
+     * every command on such a robot; it is meant for setups whose joint state
+     * does carry names. The SDK spells this out in the error message rather
+     * than leaving a bare length mismatch behind.
+     *
+     * Safe to call while a control loop is running.
+     */
+    void setIgnoreMotorNames(bool ignore);
+
+    /**
+     * @brief Current motor-name policy, true unless setIgnoreMotorNames(false).
+     */
+    bool ignoreMotorNames() const;
+
   protected:
+    // Ignoring the field is the default so that callers predating motor_names
+    // keep working; see setIgnoreMotorNames.
+    std::atomic<bool> ignore_motor_names_{true};
+
     std::vector<std::function<void(const ImuDataConstPtr &)>> imu_data_callback_;           // Callback function for handling IMU data updates.
     std::vector<std::function<void(const RobotStateConstPtr &)>> robot_state_callback_;     // Callback function for handling robot state updates.
     std::vector<std::function<void(const RobotCmdConstPtr &)>> robot_cmd_sim_callback_;     // Callback function for handling robot commands in simulation mode.

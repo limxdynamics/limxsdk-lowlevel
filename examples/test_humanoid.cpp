@@ -25,6 +25,10 @@ TEST(HumanoidTest, PublishRobotCmdTest) {
     cmd.dq.resize(motorNumber, 0);
     cmd.Kd.resize(motorNumber, 0);
     cmd.Kp.resize(motorNumber, 0);
+    // 默认（setIgnoreMotorNames(true)）下该字段不生效，SDK 会忽略它并下发空名字。
+    // 这里仍然显式传入，是为了切到严格模式 setIgnoreMotorNames(false) 时也能用。
+    // 名字取自 SDK，不要手写数组。
+    cmd.motor_names = humanoid->getMotorNames();
     cmd.stamp = 0;
 
     bool result = humanoid->publishRobotCmd(cmd);

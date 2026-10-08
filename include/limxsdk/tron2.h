@@ -133,7 +133,7 @@ namespace limxsdk
     /**
      * @brief Subscribe to feedback from the Tron2 2-finger gripper.
      *
-     * The state is fed from "/limx/2F-gripper/state" (sensor_msgs/JointState, two slots),
+     * The state is fed from "/limx/2F-gripper/state" (controller_msgs/JointState, na=2),
      * dispatched to the callback by a dedicated background thread.
      *
      * @param cb  Callback invoked when a new GripperState arrives.

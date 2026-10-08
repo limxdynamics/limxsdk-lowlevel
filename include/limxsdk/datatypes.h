@@ -215,10 +215,6 @@ namespace limxsdk
    * @brief Structure representing the feedback state of a multi-finger gripper.
    *
    * Index layout follows the command (e.g. Tron2: [left, right]).
-   *
-   * @note Fed from "/limx/2F-gripper/state", which now carries sensor_msgs/JointState:
-   *       q maps to position, v to velocity and tau to effort. That message has no
-   *       counterpart for the old controller_msgs `vd`, so @c vd is always empty now.
    */
   struct GripperState
   {
@@ -229,7 +225,7 @@ namespace limxsdk
     uint64_t stamp{0};        // Timestamp in nanoseconds.
     std::vector<float> q;     // Current opening feedback per finger (%).
     std::vector<float> v;     // Current motion speed feedback per finger.
-    std::vector<float> vd;    // Always empty since the move to sensor_msgs/JointState.
+    std::vector<float> vd;    // Desired/raw velocity feedback (controller-defined).
     std::vector<float> tau;   // Current force/torque feedback per finger.
   };
   typedef std::shared_ptr<GripperState> GripperStatePtr;
