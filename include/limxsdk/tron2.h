@@ -12,8 +12,23 @@
 #include "limxsdk/macros.h"
 #include "limxsdk/datatypes.h"
 #include "limxsdk/apibase.h"
-#include "mros/hand_msgs/HandCmd.h"
-#include "mros/hand_msgs/HandState.h"
+#include <memory>
+
+// The BrainCo hand calls below are compiled against mros message types that
+// this SDK does not ship. Forward declarations are enough to declare them and
+// keep the mangled names identical to liblimxsdk_lowlevel; calling them needs
+// the mros hand_msgs headers. Without mros, use publishDexHandCmd() /
+// subscribeDexHandState(), which take the limxsdk types from datatypes.h.
+namespace mros
+{
+  namespace hand_msgs
+  {
+    struct HandCmd;
+    struct HandState;
+    typedef std::shared_ptr<HandCmd const> HandCmdConstPtr;
+    typedef std::shared_ptr<HandState const> HandStateConstPtr;
+  } // namespace hand_msgs
+} // namespace mros
 
 namespace limxsdk
 {
