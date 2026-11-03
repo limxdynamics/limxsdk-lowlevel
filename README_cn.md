@@ -21,6 +21,8 @@ LimX 机器人的底层运动控制 SDK：用 C++ 或 Python 读取关节状态�
 > **范围：** 预编译库（`lib/`）、头文件（`include/`）、Python wheel（`python3/`）和示例。
 > 本仓库不包含 SDK 源码。
 
+> **按机型找入口：** [TRON1](https://github.com/limxdynamics/tron1-rl-isaacgym/blob/master/README_cn.md#tron1-开源生态) · [TRON2 / TRON2 DASF](https://github.com/limxdynamics/limxdynamics/blob/main/README_cn.md#开源项目) · [Oli 人形（HU_D04）](https://github.com/limxdynamics/humanoid-description/blob/master/README_cn.md#生态)——基于本 SDK 的仿真、训练和部署仓库都从这里找。
+
 ## 亮点
 
 - **一套接口，多款机器人。** 用一个类型选择机器人：`PointFoot`、`Wheellegged`、`Tron2`、`Centaur` 或 `Humanoid`。
