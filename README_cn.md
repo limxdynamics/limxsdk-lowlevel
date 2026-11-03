@@ -141,14 +141,14 @@ sudo apt install ros-noetic-urdf \
 
   ```
   cd ~/limx_ws/src
-  git clone https://github.com/limxdynamics/pointfoot-gazebo-ros.git
+  git clone https://github.com/limxdynamics/tron1-gazebo-ros.git
   ```
 
 - 下载机器人模型描述文件
 
   ```
   cd ~/limx_ws/src
-  git clone https://github.com/limxdynamics/robot-description.git
+  git clone https://github.com/limxdynamics/tron1-robot-description.git robot-description
   ```
 
 - 下载可视化调试工具
