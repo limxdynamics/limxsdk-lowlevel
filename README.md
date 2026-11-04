@@ -23,7 +23,7 @@ code drives a simulator on your computer or the real robot.
 > (`python3/`) and examples. The SDK's source code is not part of this
 > repository.
 
-> **Where to start, by robot:** [TRON1](https://github.com/limxdynamics/tron1-rl-isaacgym#tron1-open-source-ecosystem) · [TRON2 / TRON2 DASF](https://github.com/limxdynamics/limxdynamics#open-source-projects) · [Oli humanoid (HU_D04)](https://github.com/limxdynamics/humanoid-description#ecosystem) — the simulators, training and deployment repositories built on this SDK.
+> **Where to start, by robot:** [TRON1](https://github.com/limxdynamics/tron1-rl-isaacgym#tron1-open-source-ecosystem) · [TRON2 / TRON2 DASF](https://github.com/limxdynamics/limxdynamics/blob/main/doc/quickstart.md#tron2) · [Oli humanoid (HU_D04)](https://github.com/limxdynamics/limxdynamics/blob/main/doc/quickstart.md#oli) — the simulators, training and deployment repositories built on this SDK.
 
 ## Highlights
 
